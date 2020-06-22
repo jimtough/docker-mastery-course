@@ -11,6 +11,8 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
 * `docker info`
 * `docker container run ...OTHER-CONFIG-PARAMS`
   * Runs a **new** container instance
+* `docker container run -rm ...OTHER-CONFIG-PARAMS`
+  * Runs a **new** container instance, and automatically removes the container after it has been stopped
 * `docker container start ...OTHER-CONFIG-PARAMS`
   * Restart an existing container instance that is not currently running
 * `docker container ls -a`
@@ -24,14 +26,17 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
 * `docker container top <container-name>`
   * Similar to UNIX 'top' command
   * Displays info on processes running inside the container
-* `docker container top <container-name>`
-  * Similar to UNIX 'top' command
-  * Displays info on processes running inside the container
+* `docker container port <container-name>`
+  * Display port mappings for this container
 * `docker container inspect <container-name>`
 * `docker container stats`
 * `docker image ls -a`
   * List all images on my local machine
   * The `-a` flag means all - otherwise intermediate images are not displayed
+* `docker network ls`
+* `docker network inspect`
+* `docker network create --driver <driver>`
+* `docker network disconnect`
 
 
 ### other useful tips
@@ -91,6 +96,8 @@ The `docker container run` command applies some default behaviours if we don't e
 
 `docker container run --publish 8080:80 --name webhost -d nginx:1.11 nginx -T`
 
+----
+
 ## lab - getting a shell inside containers (without SSH)
 
 This lab explores alternatives to adding SSH support to your container/image.
@@ -127,6 +134,66 @@ You can execute a command inside a running container with `docker container exec
 
 Example that executes a bash shell inside a running container:  
 `docker container exec -it nginx bash`
+
+----
+
+## lab - Docker Networks
+
+### network basics
+
+Example command to obtain a running container's internal IP address:
+`docker container inspect --format "{{.NetworkSettings.IPAddress}}" nginx`
+
+* By default, your local Docker install will create its own virtual network with a name like 'bridge' or 'docker0'. All your locally running containers will use that virtual network unless you explicitly specify otherwise.
+* When you map ports to containers with `-p` such as `-p 80:8080`, Docker will expose the first port number (80) on your local machine, and direct all received traffic to the second port number (8080) on the virtual network.
+* You can create more virtual networks locally, but you must do so explicitly.
+* You can expose ports inside your virtual network such that 2 or more containers can communicate with each other, but never be exposed to the outside world.
+  * example: 'httpd' container (exposing only its own port 80) connecting to fully private 'mysql' container on a port that is never exposed to the outside world
+
+### CLI Management of networks
+
+Command to list available networks:  
+`docker network ls`
+
+Command to display details of the 'bridge' network:  
+`docker network inspect bridge`
+
+Create a new virtual network and name it 'my_app_net':  
+`docker network create my_app_net`
+
+Start a new container and connect it to virtual network 'my_app_net':  
+`docker container run  -d --name another_nginx --network my_app_net nginx:alpine`
+
+Connect a running container to an existing virtual network:  
+`docker network connect bridge another_nginx`
+* bridge - the network I'm connecting to
+* another_nginx - the running container
+
+Disconnect a running container from a virtual network:  
+`docker network disconnect bridge another_nginx`
+
+### DNS and Docker Networks
+
+* Static IPs and using IPs for talking to containers is an anti-pattern. Do your best to avoid it.
+* Docker daemon has a built-in DNS server that containers use by default.
+* Docker defaults the hostname to the container's name, but you can also set up aliases.
+  * This only works if you use a custom network, rather than the default 'bridge' network!
+
+Have two nginx containers ping each other using their own Docker-assigned DNS names (works in both directions):  
+* `docker container run -p 4321:80 -d --name my_nginx --network my_app_net nginx:alpine`
+* `docker container run -p 1234:80 -d --name new_nginx --network my_app_net nginx:alpine`
+* `docker container exec -it new_nginx ping my_nginx`
+* `docker container exec -it my_nginx ping new_nginx`
+
+### DNS Round Robin
+
+It is possible to configure a Docker network such that:  
+* Two containers have the same (explicitly assigned) DNS name alias
+* Docker will do a DNS Round Robin when requests for that DNS name alias are received
+
+There is a short exercise on this in the course, but I've skipped it for now. I'll come back to it if I really need this feature.
+
+
 
 
 
