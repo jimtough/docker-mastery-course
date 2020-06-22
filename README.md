@@ -90,3 +90,55 @@ The `docker container run` command applies some default behaviours if we don't e
 * change startup command instead of using command specified in image's Dockerfile
 
 `docker container run --publish 8080:80 --name webhost -d nginx:1.11 nginx -T`
+
+## lab - getting a shell inside containers (without SSH)
+
+This lab explores alternatives to adding SSH support to your container/image.
+
+### Run container with `-it` option
+
+This is actually two separate CLI options:
+* -i : interactive mode (keeps STDIN open even when nobody is connected)
+* -t : enable pseudo-TTY
+
+Try this as an example:  
+`docker container run -it --name proxy nginx bash`
+
+In the command above, 'bash' is executed as a command inside the container, opening a new bash shell. This overrides any default commands that were defined in the Dockerfile for this image!
+
+Because we started the container in `-it` mode, our command line will be left connected to the bash shell. When you're done issing commands inside the container, type `exit` to exit the bash shell and the interactive mode.
+
+NOTE: In the example above, we did not run in `--detach` mode. When you exit interactive mode (exit the shell) the container will stop, because there is nothing running after you exit bash.
+
+### Start an existing container with `-ai` option
+
+This is actually two separate CLI options:
+* -a : attach STDOUT/STDERR
+* -i : attach container's STDIN
+
+Try this example on the stopped container from above:  
+`docker container start -ai proxy`
+
+The container should be in the exact state that you left it when you stopped it earlier.
+
+### Run 'bash' in an existing container with `-it` option
+
+You can execute a command inside a running container with `docker container exec`. When combined with the `-it` option, you can execute a shell command and then just use the shell as you normally would on a server.
+
+Example that executes a bash shell inside a running container:  
+`docker container exec -it nginx bash`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
