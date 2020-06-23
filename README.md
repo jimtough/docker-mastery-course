@@ -47,7 +47,12 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
   * On Windows - puts a foreground container into the background (you need to then stop the container with another command)
 * docs.docker.com
   * Good resource for CLI command details, etc.
-
+* Periodically run the 'prune' command to remove things from your local machine that are no longer being used
+  * `docker system prune`
+  * `docker image prune`
+  * `docker image prune -a`
+* Check on Docker disk usage on your local workstation:
+  * `docker system df`
 
 
 ----
