@@ -33,6 +33,8 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
 * `docker image ls -a`
   * List all images on my local machine
   * The `-a` flag means all - otherwise intermediate images are not displayed
+* `docker image pull <image-name>:<image-tag>`
+  * Download an image from Docker Hub to my local machine
 * `docker network ls`
 * `docker network inspect`
 * `docker network create --driver <driver>`
@@ -58,6 +60,17 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
 * container - one instance of an image that is running as a process
   * You can have many containers running the same image
   * Docker's default image "registry" (repository of images) is Docker Hub (hub.docker.com)
+
+## What's in an Image? (and what isn't?)
+
+* App binaries and dependencies
+* Metadata about the image data and how to run the image
+* Official definition:
+  * "An Image is an ordered collection of root filesystem changes and the corresponding execution parameters for use within a container runtime."
+* An image is **NOT** a complete operating system!
+  * Does not provide a kernel
+  * Does not provide kernel modules (example: drivers)
+  * The **host** provides the kernel! This is a big difference between Docker images and traditional "virtual machine" images.
 
 
 # Course Labs and Exercises
@@ -192,6 +205,66 @@ It is possible to configure a Docker network such that:
 * Docker will do a DNS Round Robin when requests for that DNS name alias are received
 
 There is a short exercise on this in the course, but I've skipped it for now. I'll come back to it if I really need this feature.
+
+----
+
+## lab - Docker Hub Registry Images
+
+Docker Hub site: https://hub.docker.com
+
+You'll need to sign up for a free user account.
+
+* During development, it is common to allow Docker to default to using the 'latest' version of an image. Before you go to production, it is highly recommended that you specify an explicit image version tag so your builds will be repeatable.
+* Many images have 'alpine' in the name. Alpine is a very small Linux distribution that is popular due to its minimal footprint. Images with 'alpine' in the name are built on top of a base Alpine Linux.
+
+## lab - Images and their Layers
+
+Command to see the 'history' of a specified image:  
+`docker image history nginx`
+
+* The history shows the layers of that image.
+* Every image starts with a blank layer known as 'scratch'.
+* Every change that happens to that image creates another layer.
+* Some changes add to the layer size (adding files), while some do not (executing a command such as 'bash' to open a shell - this is known as adding metadata).
+* If two images build on top of the same base layer, you only need to store one copy of that base layer in your image cache and on the container host server.
+
+Command to view the details of a specified image:  
+`docker image inspect nginx`
+
+This 'image inspect' command returns a JSON string. This is where image metadata can be viewed.
+
+## lab - Image Tagging and Pushing to Docker Hub
+
+Non-official images are identified using a string in this format:  
+`<user>/<repo>:<tag>`  
+
+Official (Docker Hub) images omit the user, and look like this:  
+`<repo>:<tag>`
+
+The tag 'latest' is a pseudo-tag that is similar to HEAD in a Git repo. Image owners **should** associate it with the most recent stable release of their image, but nothing forces them to do so! If you don't specify any tag in your image-related commands, then 'latest' is used as the default.
+
+The 'user' is the name of the Docker Hub account that uploaded that image.
+
+Example of adding your own tag to an existing image:  
+`docker image tag nginx bretfisher/nginx`  
+
+(Bret Fisher is the course instructor)
+
+Command to upload an image to a repo (Docker Hub is the default repo):  
+`docker image push bretfisher/nginx`
+
+NOTE: The 'image push' command will only succeed if you're current logged in to the target repo (in this case Docker Hub) on your workstation. 
+
+* Your local install of Docker can be configured to automatically 'login' to Docker Hub at startup.
+* The Docker CLI has both 'login' and 'logout' commands that can be used.
+* These methods can also be used to authenticate/login/logout to remote repos other than Docker Hub.
+
+**BEST PRACTICE** - If you use the Docker CLI to `login` on a machine that you don't trust, then remember to `logout` when you're finished. This will remove your locally cached credentials from the user profile on that machine.
+
+
+
+
+
 
 
 
