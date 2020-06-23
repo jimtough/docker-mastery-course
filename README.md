@@ -261,6 +261,73 @@ NOTE: The 'image push' command will only succeed if you're current logged in to 
 
 **BEST PRACTICE** - If you use the Docker CLI to `login` on a machine that you don't trust, then remember to `logout` when you're finished. This will remove your locally cached credentials from the user profile on that machine.
 
+## lab - 'Dockerfile' Basics
+
+* 'Dockerfile' (with a capital D) is a file that contains the recipe for building an image.
+* The file named 'Dockerfile' is the default that Docker expects. If you want to use a file with a different name, then you need to explicitly specify its name.
+* Each command in the Dockerfile is executed in order from top to bottom of the file. The order of execution is important!
+
+### FROM command
+
+This command is required in every Dockerfile.
+
+* It specifies the base image that you are building on top of.
+* When you 'FROM' an image, you inherit all the commands from the Dockerfile of that base image.
+
+**TIP:** Package managers like 'apt' and 'yum' are one of the reasons to build containers from Debian, Ubuntu, Fedora or CentOS
+
+### ENV section
+
+Set environment variables in the container when this image is run.
+
+### RUN commands
+
+* There can be zero or more of these in your Dockerfile.
+* These are commonly used to call Package Managers that download and install packages on the container when the image is run.
+
+**BEST PRACTICE** - Chain Package Manager commands together in your RUN command with &&'s. Each RUN command in the Dockerfile creates a new image layer, so it is best to create fewer layers when possible.
+
+**BEST PRACTICE** - Add a RUN command that redirects your application logs to `/dev/stdout` and `/dev/stderr` rather than physical files. This allows Docker to capture the log output and send it elsewhere.
+
+### EXPOSE command
+
+* Expose ports on the Docker virtual network to the container.
+* This is NOT the same as exposing those ports to the host machine and the outside world - the `-p` option is used for that when you start the container.
+
+
+### CMD command
+
+This command is required in every Dockerfile.
+
+* This is the command that will be executed whenever a new container is launched using this image, or when a stopped container is restarted.
+
+## lab - Building Images - Running Docker Builds
+
+**TIP** - If you are copying an application build into the image as a step in your Dockerfile, put that step as close to the end as possible. This will allow Docker to re-use existing (cached) intermediate layers of your image on subsequent builds. Only layers after the last change need to be rebuilt.
+
+* Things that change the least should go at the top of your Dockerfile. Things that change the most should go at the bottom.
+
+### Dockerfile WORKDIR command
+
+* Change the current working directory before executing the next Dockerfile step.
+* Using `RUN cd /some/path` is considered bad practice.
+
+### Dockerfile COPY command
+
+* Copies files from your workstation (or build server) into the container.
+* This is how you add your application build to the container, for example.
+
+### Building your image (locally)
+
+`docker image build -t my-new-image-tag`
+
+* Run this command from the same directory where your Dockerfile is located.
+* Run your image with `docker container run my-new-image-tag`
+
+
+
+
+
 
 
 
