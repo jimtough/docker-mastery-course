@@ -453,6 +453,18 @@ NOTE: It is possible to create a volume ahead of time using `docker volume creat
 
 * `VOLUME /path/in/container`
 
+----
+
+## lab - Persistent Data: Bind Mounting
+
+* A 'bind mount' maps a host file or directory to a container file or directory
+* This bypasses UFS and the host files overwrite any in the container
+  * host files have precedence while bind mount is active
+* Bind mounts CANNOT be defined in a Dockerfile! They must be specified at `container run` time.
+  * `... run -v //c/Users/bret/stuff:/path/in/container` (Windows host)
+  * `... run -v /Users/bret/stuff:/path/in/container` (Linux host)
+
+
 
 
 
