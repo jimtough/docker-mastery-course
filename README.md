@@ -3,6 +3,10 @@ Notes, code, etc, from Docker Mastery course I took on Udemy
 
 Course URL: https://www.udemy.com/course/docker-mastery/
 
+----
+
+# miscellaneous notes
+
 ## Useful Docker CLI commands
 
 NOTE: Docker has introduced a new command structure: `docker <command> <sub-command>`
@@ -41,7 +45,7 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
 * `docker network disconnect`
 
 
-### other useful tips
+## other useful tips
 
 * CTRL-C
   * On Windows - puts a foreground container into the background (you need to then stop the container with another command)
@@ -57,7 +61,8 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
 
 ----
 
-# Course Notes
+
+# General Course Notes
 
 ## image versus container
 
@@ -76,6 +81,18 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
   * Does not provide a kernel
   * Does not provide kernel modules (example: drivers)
   * The **host** provides the kernel! This is a big difference between Docker images and traditional "virtual machine" images.
+
+## Container Lifetime and Persistent Data
+
+* Containers are (usually) immutable and ephemeral
+* "immutable infrastructure" - only re-deploy containers, never change them
+* "unique data" is a separate concern from the container
+* Docker provides two solutions for persistent data:
+  * Volumes - make a special location outside of the container's UFS (union file system) that is not part of the container's lifecycle
+  * Bind Mounts - link container path to a path on the container's host
+
+
+----
 
 
 # Course Labs and Exercises
@@ -329,6 +346,112 @@ This command is required in every Dockerfile.
 * Run this command from the same directory where your Dockerfile is located.
 * Run your image with `docker container run my-new-image-tag`
 
+----
+
+## lab - Persistent Data: Volumes
+
+Command to view local volumes:  
+`docker volume ls`
+
+Useful command to clean up leftover volumes from previous labs:  
+`docker volume prune`
+
+Lab commands:  
+* `docker pull mysql`
+* `docker image inspect mysql`
+
+You can see in the JSON output that this image has a volume defined for a particular path:
+```
+            "Volumes": {
+                "/var/lib/mysql": {}
+            },
+```
+
+* `docker container run -d --name mysql -e MYSQL_ALLOW_EMPTY_PASSWORD=True mysql`
+* `docker container ls`
+* `docker container inspect mysql`
+
+You can see in the JSON output that this container has mounted the volume defined in the image to the default local volume:
+```
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1",
+                "Source": "/var/lib/docker/volumes/9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1/_data",
+                "Destination": "/var/lib/mysql",
+                "Driver": "local",
+                "Mode": "",
+                "RW": true,
+                "Propagation": ""
+            }
+        ],
+```
+
+* `docker volume ls`
+* `docker volume inspect <volume-name>`
+
+```
+[
+    {
+        "CreatedAt": "2020-06-25T13:54:43Z",
+        "Driver": "local",
+        "Labels": null,
+        "Mountpoint": "/var/lib/docker/volumes/9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1/_data",
+        "Name": "9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1",
+        "Options": null,
+        "Scope": "local"
+    }
+]
+```
+
+* `docker container run -d --name mysql2 -e MYSQL_ALLOW_EMPTY_PASSWORD=True mysql`
+* `docker volume ls`
+
+Each container instance of 'mysql' image is assigned a new local volume with a unique, but not-user-friendly, volume name.
+```
+DRIVER              VOLUME NAME
+local               9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1
+local               f43b713e8ee336fb0f278d3d46565fe6547496c08d31a0ed2f4bdd21074bafe7
+```
+
+* `docker container rm -f mysql mysql2`
+* `docker volume ls`
+  * The containers are gone, but the volumes still exist
+
+Let's make these volumes easier to manage by using 'named volumes'.
+
+* `docker container run -d --name mysql1 -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql1-db:/var/lib/mysql mysql`
+* `docker container run -d --name mysql2 -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql2-db:/var/lib/mysql mysql`
+* `docker volume ls`
+
+```
+DRIVER              VOLUME NAME
+local               9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1
+local               f43b713e8ee336fb0f278d3d46565fe6547496c08d31a0ed2f4bdd21074bafe7
+local               mysql1-db
+local               mysql2-db
+```
+
+* `docker container rm -f mysql1 mysql2`
+* `docker volume ls`
+* `docker container run -d --name mysql1B -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql1-db:/var/lib/mysql mysql`
+* `docker container run -d --name mysql2B -e MYSQL_ALLOW_EMPTY_PASSWORD=True -v mysql2-db:/var/lib/mysql mysql`
+* `docker volume ls`
+
+The newly created containers will reuse the same named volumes
+```
+DRIVER              VOLUME NAME
+local               9ad6e7b5dd6286945e6e78925d4eb0b89fdd6bd5bcce70ad81d2bc9407ea15c1
+local               f43b713e8ee336fb0f278d3d46565fe6547496c08d31a0ed2f4bdd21074bafe7
+local               mysql1-db
+local               mysql2-db
+```
+
+NOTE: It is possible to create a volume ahead of time using `docker volume create <options>`. This is usually done on production environments and/or when a special volume driver is required. This is rarely done on a local development workstation.
+
+### Dockerfile VOLUME command
+
+* `VOLUME /path/in/container`
 
 
 
