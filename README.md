@@ -91,6 +91,14 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
   * Volumes - make a special location outside of the container's UFS (union file system) that is not part of the container's lifecycle
   * Bind Mounts - link container path to a path on the container's host
 
+## Docker Compose
+
+* Used to configure and run one or more Docker containers, including configuration of dependencies between the containers, Docker virtual networks, etc
+* Configuration is defined in a YAML file
+  * Default file name is 'docker-compose.yml'
+  * File format reference: https://docs.docker.com/compose/compose-file/
+  * There are multiple version of the YAML file (course covers up to version spec 3.1)
+
 
 ----
 
@@ -463,6 +471,24 @@ NOTE: It is possible to create a volume ahead of time using `docker volume creat
 * Bind mounts CANNOT be defined in a Dockerfile! They must be specified at `container run` time.
   * `... run -v //c/Users/bret/stuff:/path/in/container` (Windows host)
   * `... run -v /Users/bret/stuff:/path/in/container` (Linux host)
+
+Use this command (in Windows PowerShell) to bind mount my current working directory to the nginx container path `/usr/share/nginx/html`:  
+`docker container run -d --name nginx -p 80:80 -v ${pwd}:/usr/share/nginx/html nginx`
+
+----
+
+## lab - Trying out basic Docker Compose commands
+
+### docker-compose CLI
+* Comes packaged with Docker for Windows/Mac
+* Not a production-grade tool, but ideal for local development and testing
+* Two most common commands:
+  * `docker-compose up` (setup volumes/networks and start all containers)
+  * `docker-compose down` (stop all containers and remove all containers/volumes/networks)
+* More commands:
+  * `docker-compose up -d` (run in detached mode)
+  * `docker-compose ps`
+  * `docker-compose top`
 
 
 
