@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+
+  postgres:
+    image: postgres:12.3
+    networks:
+      - backend
+    env_file: 
+      - ./postgres.env
+    volumes:
+      - postgres-12-3-db-data:/var/lib/postgresql/data
+      # See README.md - this approach does not work with Docker for Windows
+      #- type: bind
+      #  source: //D//DOCKER_MOUNT_ON_D_DRIVE/postgres-12-3-db-data
+      #  target: /var/lib/postgresql/data
+
+  drupal:
+    image: drupal:8.9
+    networks:
+      - frontend
+      - backend
+    ports:
+      - "8080:80"
+    volumes:
+      - drupal-volume:/var/www/html
+      # See README.md - this approach does not work with Docker for Windows
+      # - type: bind
+      #   source: //D//DOCKER_MOUNT_ON_D_DRIVE/BIND_MOUNTS/drupal-8-9/modules
+      #   target: /var/www/html/modules
+      # - type: bind
+      #   source: //D//DOCKER_MOUNT_ON_D_DRIVE/BIND_MOUNTS/drupal-8-9/profiles
+      #   target: /var/www/html/profiles
+      # - type: bind
+      #   source: //D//DOCKER_MOUNT_ON_D_DRIVE/BIND_MOUNTS/drupal-8-9/sites
+      #   target: /var/www/html/sites
+      # - type: bind
+      #   source: //D//DOCKER_MOUNT_ON_D_DRIVE/BIND_MOUNTS/drupal-8-9/themes
+      #   target: /var/www/html/themes
+    depends_on:
+      - postgres
+
+networks:
+  frontend:
+  backend:
+
+volumes:
+  postgres-12-3-db-data:
+    external: true
+  drupal-volume:
