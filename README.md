@@ -484,11 +484,21 @@ Use this command (in Windows PowerShell) to bind mount my current working direct
 * Not a production-grade tool, but ideal for local development and testing
 * Two most common commands:
   * `docker-compose up` (setup volumes/networks and start all containers)
-  * `docker-compose down` (stop all containers and remove all containers/volumes/networks)
+  * `docker-compose down` (stop all containers and remove all containers/networks)
 * More commands:
   * `docker-compose up -d` (run in detached mode)
   * `docker-compose ps`
   * `docker-compose top`
+  * `docker-compose down -v` (stop all containers and remove all containers/networks AND volumes!)
+
+## lab - Adding Image Building to docker-compose files
+
+* Docker Compose supports building a custom image using commands defined in your docker-compose.yml file
+  *  Can be triggered automatically when `docker-compose up` is executed if the image does not exist yet
+  * Must be triggered explicitly with `docker-compose up --build` or `docker-compose build` if you want to replace the existing image
+* See instructor example in 'examples/bretfisher/compose-sample-3'
+
+
 
 
 
