@@ -121,7 +121,33 @@ Docker creates new challenges:
   * docker stack
   * docker secret
 
+### other Docker Swarm notes
+* Swarm has a network driver named 'overlay' that is intended for communication between containers that belong to the same swarm/cluster
+* Swarm provides something called 'Routing Mesh' that:
+  * Routes ingress (incoming) packets for a Service to the proper Task
+  * Spans all nodes in the Swarm
+  * It uses IPVS from the Linux Kernel
+  * Load balances Swarm Services across their tasks
+  * There are two ways this works:
+    * Container-to-Container in a Overlay network (uses VIP)
+    * External traffic incoming to published ports (all nodes listen)
+  * 'Routing Mesh' important facts
+    * This is **stateless load balancing** (bad if you're depending on session cookies, or similar)
+    * The load balancer is at OSI Layer 3 (TCP), not Layer 4 (DNS)
+    * Both limitations can be overcome with:
+      * Nginx or HAProxy LB proxy, or
+      * Docker Enterprise Edition (comes with L4 web proxy)
+* Swarm provides something called 'Stacks'
+  * Stacks accept Compose files as their declarative definition for services, networks, and volumes
+  * We use `docker stack deploy` rather than `docker service create`
+  * 'Stacks' manages all those objects for us, including overlay network per stack. Adds stack name to start of their name.
+  * New 'deploy:' key in the Compose file. Can't do 'build:'.
+    * Compose now ignores 'deploy:' and Swarm ignores 'build:'
+  * 'docker-compose' CLI is not needed on the Swarm server
+
+
 ----
+
 
 # Course Labs and Exercises
 
@@ -568,6 +594,25 @@ Command to list all running containers (including those in my Swarm):
 Command to scale up to 3 replicas of service XYZ:  
 `docker service update XYZ --replicas 3`
 
+----
+
+## lab - Swarm Stacks and production-grade Compose
+
+Will use instructor's 'swarm-stack-1' example:  
+`docker stack deploy -c example-voting-app-stack.yml voteapp`
+
+Useful commands:
+* `docker stack ls`
+* `docker stack ps voteapp` (this shows the list of running Tasks)
+* `docker stack services voteapp` (this shows list of Services in the Stack and their current state)
+
+If everything is running properly, you should be able to open these URLs:  
+* http://localhost:5000/ (the voting page)
+* http://localhost:5001/ (the voting results page)
+* http://localhost:8080/ (the Swarm Visualizer)
+
+You can edit the YAML file used to deploy the stack, and then issue the same command as before **while the stack is running** and see your YAML file changes applied:  
+`docker stack deploy -c example-voting-app-stack.yml voteapp`
 
 
 
