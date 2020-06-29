@@ -99,9 +99,29 @@ NOTE: Docker has introduced a new command structure: `docker <command> <sub-comm
   * File format reference: https://docs.docker.com/compose/compose-file/
   * There are multiple version of the YAML file (course covers up to version spec 3.1)
 
+## Docker Swarm
+
+Docker creates new challenges:
+* How do we automate container lifecycle?
+* How can we scale out/in/up/down?
+* How can we ensure our containers are re-created if they fail?
+* How can we replace containers without downtime (blue/green deploy)?
+* How can we control/track where containers get started?
+* How can we create cross-node virtual networks?
+* How can we ensure only trusted servers run our containers?
+* How can we store sercrets, keys, passwords, etc., and get then to the right container (and ONLY that container)?
+
+### Swarm Mode - Built-In Orchestration
+* Swarm Mode is a clustering solution built inside Docker
+* Swarm Mode **is not** enabled by default
+* New commands once it is enabled:
+  * docker swarm
+  * docker node
+  * docker service
+  * docker stack
+  * docker secret
 
 ----
-
 
 # Course Labs and Exercises
 
@@ -497,6 +517,59 @@ Use this command (in Windows PowerShell) to bind mount my current working direct
   *  Can be triggered automatically when `docker-compose up` is executed if the image does not exist yet
   * Must be triggered explicitly with `docker-compose up --build` or `docker-compose build` if you want to replace the existing image
 * See instructor example in 'examples/bretfisher/compose-sample-3'
+
+----
+
+## lab - Docker Swarm - Create your first service and scale it locally
+
+How to check if Swarm is enabled?
+* `docker info`
+
+If you see the following in the output, then Swarm is **not** enabled:
+```
+Swarm: inactive
+```
+
+To enable Swarm, use the following command:  
+`docker swarm init`
+
+That was fast! What just happened?
+* Lots of PKI and security automation
+  * Root Signing Certificate created for our Swarm
+  * Certificate is issued for the first Manager node
+  * Join tokens are created
+* Raft database created to store root CA, configs and secrets
+  * Encrypted by default on disk
+  * No need for another key/value system to hold orchestration/secrets
+  * Replicates logs amongst Managers via mutual TLS in "control plane"
+
+Command to show Docker Swarm nodes:  
+`docker node ls`
+
+```
+ID                            HOSTNAME            STATUS              AVAILABILITY        MANAGER STATUS      ENGINE VERSION
+xt352oru97bxm615fcbn8dvuy *   docker-desktop      Ready               Active              Leader              19.03.8
+```
+
+NOTE: There can only be one "Leader" node
+
+Command to create a simple Docker Swarm service:  
+`docker service create alpine ping 8.8.8.8`
+
+Command to list all services:  
+`docker service ls`
+
+Command to list all running tasks in service 'XYZ':  
+`docker service ps XYZ`
+
+Command to list all running containers (including those in my Swarm):  
+`docker container ls`
+
+Command to scale up to 3 replicas of service XYZ:  
+`docker service update XYZ --replicas 3`
+
+
+
 
 
 
