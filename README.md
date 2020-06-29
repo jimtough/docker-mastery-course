@@ -614,6 +614,29 @@ If everything is running properly, you should be able to open these URLs:
 You can edit the YAML file used to deploy the stack, and then issue the same command as before **while the stack is running** and see your YAML file changes applied:  
 `docker stack deploy -c example-voting-app-stack.yml voteapp`
 
+----
+
+## lecture - Secrets storage for Swarm
+
+* Easiest 'secure' solution for storing secrets in Swarm
+* What is a Secret?
+  * Usernames and passwords
+  * TLS certificates and keys
+  * SSH keys
+  * Any data you would prefer not be "on front page of news"
+* Supports generic strings of binary content up to 500Kb in size
+* Doesn't require apps to be rewritten
+* Swarm Raft database is encrypted on disk
+  * It is only stored on Manager nodes
+* Default is Managers and Workers 'control plane' is TLS + mutual authentication
+* Secrets are first stored in Swarm, then assigned to a Service
+* Only Containers in assigned Service(s) can see them
+* They look like files in the Container, but are actually in-memory filesystem
+  * `/run/secrets/<secret_name>` or
+  * `/run/secrets/<secret_alias>`
+* Local docker-compose can use file-based Secrets, but that is not secure!
+
+
 
 
 
