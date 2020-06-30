@@ -161,17 +161,34 @@ This is what my Dockerfile looks like:
 ```
 FROM adoptopenjdk/openjdk8:alpine-jre
 
+# This is only here to verify that the command runs
+RUN java -version
+
 RUN apk -v update \
    && apk -v upgrade \
    && rm -rf /var/cache/apk/*
 
-# Create group 'myappuser', then user 'myappuser', and make 'myappuser' the default group for this user
-RUN addgroup myappuser && adduser -G myappuser -D myappuser
+# Create group 'appuser', then user 'appuser', and make 'appuser' the default group for this user
+RUN addgroup appuser && adduser -G appuser -D appuser
 
-# TODO figure out why I'm not able to run 'java -version' at the shell in interactive mode
+RUN mkdir /var/app \
+	&& mkdir /var/log/my-springboot-app \
+	&& chown appuser:appuser /var/log/my-springboot-app \
+	# This must match the log file path that the Spring Boot application uses
+	&& touch /var/log/my-springboot-app/my-springboot-app.log
 
-# TODO add COPY command to add the Spring Boot uberjar to the image
-# TODO add either an ENTRYPOINT or CMD that starts the application
+COPY ./build/libs/springboot-helloworld.jar /var/app/my-springboot-app.jar
+
+RUN chown appuser:appuser /var/app/my-springboot-app.jar
+
+# Redirect output that should go to the log file to instead go to /dev/stdout.
+# This will allow the Docker logging service to capture that output and send it elsewhere.
+# NOTE: Must match the log file path that the Spring Boot application uses!
+#RUN ln -sf /dev/stdout /var/log/my-springboot-app/my-springboot-app.log
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "/var/app/my-springboot-app.jar"]
 ```
 
 There are the commands I used while I was figuring things out:  
@@ -187,7 +204,11 @@ There are the commands I used while I was figuring things out:
   * This will create a new container instance of the image I built locally (and tagged as 'foobar') and starts an interactive terminal session in the 'sh' shell (the default shell in Alpine Linux)
   * This is useful for testing my custom image as I add layers to it
   * I must explicitly rebuild my image every time I edit my Dockerfile before I re-run this command
-* `docker system prune`
+* `docker container run --name foobar1 -p 80:8080 foobar`
+  * This will run my working image, executing the ENTRYPOINT command at startup
+  * Maps my local machine port 80 to container port 8080 (which the Spring Boot app listens on)
+  * This container does not run in interactive mode, so I have to explicitly stop it when I'm finished with it
+* `docker system prune -a`
   * Gets rid of stopped containers left over from my manual tests
   * Gets rid of local images left over from my manual tests/builds
 
