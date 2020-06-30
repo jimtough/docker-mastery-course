@@ -145,6 +145,52 @@ Docker creates new challenges:
     * Compose now ignores 'deploy:' and Swarm ignores 'build:'
   * 'docker-compose' CLI is not needed on the Swarm server
 
+----
+
+# Applying what I've learning in the course
+
+## Creating an image to host a Spring Boot application
+
+My goal is to:
+* Select a base Linux image from Docker Hub that includes Java 8+ runtime support
+* Create a Dockerfile that builds on that base image to make it a host for my Spring Boot application
+* Build a local image using my Dockerfile, and tag it
+* Test my Spring Boot application locally using Docker Desktop to run the image in a local container
+
+This is what my Dockerfile looks like:  
+```
+FROM adoptopenjdk/openjdk8:alpine-jre
+
+RUN apk -v update \
+   && apk -v upgrade \
+   && rm -rf /var/cache/apk/*
+
+# Create group 'myappuser', then user 'myappuser', and make 'myappuser' the default group for this user
+RUN addgroup myappuser && adduser -G myappuser -D myappuser
+
+# TODO figure out why I'm not able to run 'java -version' at the shell in interactive mode
+
+# TODO add COPY command to add the Spring Boot uberjar to the image
+# TODO add either an ENTRYPOINT or CMD that starts the application
+```
+
+There are the commands I used while I was figuring things out:  
+* `docker container run -it --name foobar1 adoptopenjdk/openjdk8:alpine-jre /bin/sh`
+  * This will create a new container instance of the base image (from Docker Hub) and start an interactive terminal session in the 'sh' shell (the default shell in Alpine Linux)
+  * This is really useful for manually running commands and observing the result before I paste them into my Dockerfile
+  * 'foobar1' is the name I'm assigning to the container instance
+* `docker image build -t 'foobar' .`
+  * This builds a local image tagged as 'foobar'
+  * The `.` at the end of the command is the local context path - in other words, the path to the directory where my Dockerfile is located
+* `docker image ls`
+* `docker container run -it --name foobar1 foobar /bin/sh`
+  * This will create a new container instance of the image I built locally (and tagged as 'foobar') and starts an interactive terminal session in the 'sh' shell (the default shell in Alpine Linux)
+  * This is useful for testing my custom image as I add layers to it
+  * I must explicitly rebuild my image every time I edit my Dockerfile before I re-run this command
+* `docker system prune`
+  * Gets rid of stopped containers left over from my manual tests
+  * Gets rid of local images left over from my manual tests/builds
+
 
 ----
 
@@ -337,6 +383,8 @@ NOTE: The 'image push' command will only succeed if you're current logged in to 
 
 **BEST PRACTICE** - If you use the Docker CLI to `login` on a machine that you don't trust, then remember to `logout` when you're finished. This will remove your locally cached credentials from the user profile on that machine.
 
+----
+
 ## lab - 'Dockerfile' Basics
 
 * 'Dockerfile' (with a capital D) is a file that contains the recipe for building an image.
@@ -377,6 +425,8 @@ This command is required in every Dockerfile.
 
 * This is the command that will be executed whenever a new container is launched using this image, or when a stopped container is restarted.
 
+----
+
 ## lab - Building Images - Running Docker Builds
 
 **TIP** - If you are copying an application build into the image as a step in your Dockerfile, put that step as close to the end as possible. This will allow Docker to re-use existing (cached) intermediate layers of your image on subsequent builds. Only layers after the last change need to be rebuilt.
@@ -395,10 +445,11 @@ This command is required in every Dockerfile.
 
 ### Building your image (locally)
 
-`docker image build -t my-new-image-tag`
+Run this command from the same directory where your Dockerfile is located:  
+`docker image build -t my-new-image-tag .`
 
-* Run this command from the same directory where your Dockerfile is located.
-* Run your image with `docker container run my-new-image-tag`
+Run your image with:  
+`docker container run my-new-image-tag`
 
 ----
 
